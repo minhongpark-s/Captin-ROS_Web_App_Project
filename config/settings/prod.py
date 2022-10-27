@@ -1,14 +1,11 @@
 from .base import *
-import environ
 
 ALLOWED_HOSTS = ['3.38.25.123']
 STATIC_ROOT = BASE_DIR / 'static/'
 STATICFILES_DIRS = []
-DEBUG = False
+DEBUG = True
 
-env = environ.Env()
-environ.Env.read_env(BASE_DIR / '.env')
-
+'''
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -17,5 +14,17 @@ DATABASES = {
         'PASSWORD': env('DB_PASSWORD'),
         'HOST': env('DB_HOST'),
         'PORT': '5432',
+    }
+}
+'''
+
+DATABASES = {
+    'default' : {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'robotData',
+        'USER': 'root',
+        'PASSWORD': 'Bruce1928@',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
     }
 }
