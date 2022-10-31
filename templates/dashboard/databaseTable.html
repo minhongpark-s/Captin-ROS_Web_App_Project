@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+
+<head>
+
+</head>
+
+<body>
+    <ul>
+    {% for i in rd %}
+        <li><p>{{i.robotPositionX}}</li>
+        <li>{{ i.robotPositionY }}</li>
+        <li><p>{{ i.checked_at }}</li>
+    {% endfor %}
+    </ul>
+</body>

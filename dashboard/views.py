@@ -1,3 +1,4 @@
+from http.client import HTTPResponse
 from django.shortcuts import render, redirect
 
 from .models import robotData
@@ -49,3 +50,11 @@ def ajax_method(request):
     receive_message = request.POST.get('x')
     send_message = {'send_data' : "I received "+receive_message}
     return JsonResponse(send_message)
+
+def showAllDatabases(request):
+    rd = list(robotData.objects.all())
+    return render(
+        request,
+        'dashboard/databaseTable.html',
+        {'rd' : rd},
+        )
