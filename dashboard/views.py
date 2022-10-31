@@ -1,11 +1,13 @@
 from http.client import HTTPResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 
 from .models import robotData
 # for timing the robotData database.
 from datetime import datetime
+from datetime import timedelta
 
 from django.http import JsonResponse
+from django.core.exceptions import ObjectDoesNotExist
 
 # for ajax request.
 from django.views.decorators.csrf import csrf_exempt
@@ -58,3 +60,48 @@ def showAllDatabases(request):
         'dashboard/databaseTable.html',
         {'rd' : rd},
         )
+def create1data(request):
+    rd = robotData()
+    rd.robotPositionY = 10
+    rd.robotPositionX = 10
+    rd.checked_at = datetime.now()
+    rd.save()
+    return render(
+        request,
+        'dashboard/databaseTable.html',
+    )
+
+# 현재시간의 데이터를 요청합니다.
+# 현재 데이터가 없다면, 1초전의 데이터를 요청합니다.
+def requestNowdata(request):
+    #rd = robotData.objects.all()
+    try:
+        current1 = datetime.now()
+        grd = robotData.objects.get(checked_at=current1)
+        return render(
+            request,
+            {'grd': grd},
+            'dashboard/requestNowdata.html'
+        )
+    except ObjectDoesNotExist:
+        logs = "first request failed."
+        try:
+            current2 = current1-timedelta(seconds=1)
+            grd = robotData.objects.get(checked_at=current2)
+            return render(
+                request,
+                {'grd': grd},
+                'dashboard/requestNowdata.html'
+            )
+        except ObjectDoesNotExist:
+            logs += "second request failed. "
+            context = {
+                'logs': logs,
+                'current1' : current1,
+                'current2' : current2,
+            }
+            return render(
+                request,
+                'dashboard/requestNowdata.html',
+                context,
+            )

@@ -8,4 +8,6 @@ urlpatterns = [
     path('updateDatabase/',views.updateDatabase),
     path('ajax_method/',views.ajax_method, name='ajax_method'),
     path('showAllDatabases/',views.showAllDatabases, name='showAllDatabases'),
+    path('create1data/', views.create1data, name='create1data'),
+    path('requestNowdata/', views.requestNowdata, name='requestNowdata'),
 ]

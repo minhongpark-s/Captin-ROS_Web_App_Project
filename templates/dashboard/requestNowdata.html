@@ -5,8 +5,13 @@
 </head>
 
 <body>
+    {% for i in logs %}
+        {{i}}
+    {% endfor %}
+    {{ current1|date:'m월 d일 H시 i분 s초' }}
+    {{ current2|date:'m월 d일 H시 i분 s초' }}
     <ul>
-    {% for i in rd %}
+    {% for i in grd %}
         <li><p>{{i.robotPositionX}}</li>
         <li>{{ i.robotPositionY }}</li>
         <li><p>{{ i.checked_at }}</li>
