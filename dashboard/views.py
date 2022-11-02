@@ -115,8 +115,8 @@ def dataconnection(request):
         receive_message_x = request.POST.get('x')
         receive_message_y = request.POST.get('y')
         rd = robotData()
-        rd.robotPositionY = int(receive_message_x)
-        rd.robotPositionX = int(receive_message_y)
+        rd.robotPositionY = receive_message_x
+        rd.robotPositionX = receive_message_y
         rd.checked_at = datetime.now()
         rd.save()
         send_message = {'send_data' : "I received "+ receive_message_x + " and " + receive_message_y}
