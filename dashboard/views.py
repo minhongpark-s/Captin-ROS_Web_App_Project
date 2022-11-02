@@ -6,8 +6,11 @@ from .models import robotData
 from datetime import datetime
 from datetime import timedelta
 
+
 from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
+import pytz
 
 # for ajax request.
 from django.views.decorators.csrf import csrf_exempt
@@ -76,8 +79,9 @@ def create1data(request):
 def requestNowdata(request):
     #rd = robotData.objects.all()
     try:
-        current1 = datetime.now()
-        grd = robotData.objects.get(checked_at=current1)
+        current1 = timezone.localtime(timezone.now())
+        grd = robotData.objects.filter(checked_at__second=40).filter(checked_at__minute=38).filter(checked_at__hour=1)
+        #grd = robotData.objects.get(checked_at=current1)
         return render(
             request,
             {'grd': grd},
@@ -86,7 +90,7 @@ def requestNowdata(request):
     except ObjectDoesNotExist:
         logs = "first request failed."
         try:
-            current2 = current1-timedelta(seconds=1)
+            current2 = current1-timedelta(seconds=5)
             grd = robotData.objects.get(checked_at=current2)
             return render(
                 request,
@@ -105,3 +109,16 @@ def requestNowdata(request):
                 'dashboard/requestNowdata.html',
                 context,
             )
+
+def dataconnection(request):
+    if request.method == 'POST':
+        receive_message_x = request.POST.get('x')
+        receive_message_y = request.POST.get('y')
+        rd = robotData()
+        rd.robotPositionY = int(receive_message_x)
+        rd.robotPositionX = int(receive_message_y)
+        rd.checked_at = datetime.now()
+        rd.save()
+        send_message = {'send_data' : "I received "+ receive_message_x + " and " + receive_message_y}
+        return JsonResponse(send_message)
+

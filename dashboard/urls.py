@@ -10,4 +10,8 @@ urlpatterns = [
     path('showAllDatabases/',views.showAllDatabases, name='showAllDatabases'),
     path('create1data/', views.create1data, name='create1data'),
     path('requestNowdata/', views.requestNowdata, name='requestNowdata'),
+
+    path('addDataRequest/<str:request_string>'),
+    path('sendDataToServer/', views.sendDataToServer, name='sendDataToServer'),
+    path('dataconnection', views.dataconnection, name='dataconnection'),
 ]
