@@ -9,8 +9,7 @@
     {% for i in rd %}
         <li><p>{{i.robotPositionX}}</li>
         <li>{{ i.robotPositionY }}</li>
-        <li><p>{{ i.checked_at }}</li>
-        <li><p>{{ i.checked_at|date:'m월 d일 H시 i분 s초' }}</p></li>
+        <li><p>{{ i.postime }}</li>
     {% endfor %}
     </ul>
 </body>

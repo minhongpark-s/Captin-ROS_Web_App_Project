@@ -2,9 +2,11 @@ from http.client import HTTPResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from .models import robotData
+from .models import robotData2
 # for timing the robotData database.
 from datetime import datetime
 from datetime import timedelta
+import time
 
 
 from django.http import JsonResponse
@@ -57,17 +59,18 @@ def ajax_method(request):
     return JsonResponse(send_message)
 
 def showAllDatabases(request):
-    rd = list(robotData.objects.all())
+    rd = list(robotData2.objects.all())
     return render(
         request,
         'dashboard/databaseTable.html',
         {'rd' : rd},
-        )
+    )
+        
 def create1data(request):
-    rd = robotData()
+    rd = robotData2()
     rd.robotPositionY = 10
     rd.robotPositionX = 10
-    rd.checked_at = datetime.now()
+    rd.postime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     rd.save()
     return render(
         request,
@@ -77,11 +80,14 @@ def create1data(request):
 # 현재시간의 데이터를 요청합니다.
 # 현재 데이터가 없다면, 1초전의 데이터를 요청합니다.
 def requestNowdata(request):
-    #rd = robotData.objects.all()
     try:
-        current1 = timezone.localtime(timezone.now())
-        grd = robotData.objects.filter(checked_at__second=40).filter(checked_at__minute=38).filter(checked_at__hour=1)
-        #grd = robotData.objects.get(checked_at=current1)
+        t1 = datetime.now()
+        t2 = t1 - timedelta(seconds=1)
+        c1 = t1.strftime('%Y-%m-%d %H:%M:%S')
+        c2 = t2.strftime('%Y-%m-%d %H:%M:%S')
+        
+        grd = robotData2.objects.get(postime=c1)
+        
         return render(
             request,
             {'grd': grd},
@@ -90,8 +96,7 @@ def requestNowdata(request):
     except ObjectDoesNotExist:
         logs = "first request failed."
         try:
-            current2 = current1-timedelta(seconds=5)
-            grd = robotData.objects.get(checked_at=current2)
+            grd = robotData2.objects.get(postime=c2)
             return render(
                 request,
                 {'grd': grd},
@@ -101,8 +106,8 @@ def requestNowdata(request):
             logs += "second request failed. "
             context = {
                 'logs': logs,
-                'current1' : current1,
-                'current2' : current2,
+                'current1' : c1,
+                'current2' : c2,
             }
             return render(
                 request,
