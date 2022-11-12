@@ -17,6 +17,9 @@ import pytz
 # for ajax request.
 from django.views.decorators.csrf import csrf_exempt
 
+from django.core import serializers
+from django.http import HttpResponse
+
 def robotDataCleanUp(request):
     q = robotData.objects.all()
     q.delete()
@@ -80,6 +83,23 @@ def create1data(request):
 # 현재시간의 데이터를 요청합니다.
 # 현재 데이터가 없다면, 1초전의 데이터를 요청합니다.
 def requestNowdata(request):
+
+    '''
+    t1 = datetime.now()
+    t2 = t1 - timedelta(seconds=1)
+    c1 = t1.strftime('%Y-%m-%d %H:%M:%S')
+    c2 = t2.strftime('%Y-%m-%d %H:%M:%S')
+    
+    grd = robotData2.objects.get(postime=c1)
+    context = {
+                'grd.postime':grd.postime
+            }
+    return render(
+           request,
+           'dashboard/requestNowdata.html',
+           context,
+    )
+    '''
     try:
         t1 = datetime.now()
         t2 = t1 - timedelta(seconds=1)
@@ -87,34 +107,44 @@ def requestNowdata(request):
         c2 = t2.strftime('%Y-%m-%d %H:%M:%S')
         
         grd = robotData2.objects.get(postime=c1)
-        
+        logs = "first database request successed. request time is " + c1 + "\n data time is " + grd.postime
+        context = {
+                'data_postime':str(grd.postime),
+                'data_x': str(grd.robotPositionX),
+                'data_y': str(grd.robotPositionY),
+                'logs': logs,
+                }
         return render(
             request,
-            {'grd': grd},
-            'dashboard/requestNowdata.html'
+            'dashboard/requestNowdata.html',
+            context,
         )
     except ObjectDoesNotExist:
-        logs = "first request failed."
+        logs = "\nfirst database request failed."
         try:
             grd = robotData2.objects.get(postime=c2)
-            return render(
-                request,
-                {'grd': grd},
-                'dashboard/requestNowdata.html'
-            )
-        except ObjectDoesNotExist:
-            logs += "second request failed. "
+            logs = "second database request successed. request time is " + c2 + "\n data time is " + grd.postime
             context = {
-                'logs': logs,
-                'current1' : c1,
-                'current2' : c2,
+                'data_postime':str(grd.postime),
+                'data_x': str(grd.robotPositionX),
+                'data_y': str(grd.robotPositionY),
+                'logs' : logs
             }
             return render(
                 request,
                 'dashboard/requestNowdata.html',
                 context,
             )
-
+        except ObjectDoesNotExist:
+            logs += "\nsecond database request failed. "
+            context = {
+                'logs': logs,
+            }
+            return render(
+                request,
+                'dashboard/requestNowdata.html',
+                context,
+            )
 def dataconnection(request):
     if request.method == 'POST':
         receive_message_x = request.POST.get('x')
@@ -126,4 +156,23 @@ def dataconnection(request):
         rd.save()
         send_message = {'send_data' : "I received "+ receive_message_x + " and " + receive_message_y}
         return JsonResponse(send_message)
+        
+        
+def rqDataJson(request):
+
+    t1 = datetime.now()
+    t2 = t1 - timedelta(seconds=1)
+    c1 = t1.strftime('%Y-%m-%d %H:%M:%S')
+    c2 = t2.strftime('%Y-%m-%d %H:%M:%S')
+        
+    grd = robotData2.objects.get(postime=c2)
+    results = []
+    results.append({
+        "postime":grd.postime,
+        "x" : grd.robotPositionX,
+        "y" : grd.robotPositionY
+    })
+    return JsonResponse({"results":results}, status=200)
+    #grd_list = serializers.serialize('json', grd)
+    #return HttpResponse(grd_list, content_type="text/json-comment-filtered")
 

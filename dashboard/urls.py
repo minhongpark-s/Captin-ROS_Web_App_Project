@@ -12,4 +12,6 @@ urlpatterns = [
     path('requestNowdata/', views.requestNowdata, name='requestNowdata'),
 
     path('dataconnection', views.dataconnection, name='dataconnection'),
+    
+    path('rqDataJson/', views.rqDataJson, name='rqDataJson'),
 ]
