@@ -13,5 +13,6 @@ urlpatterns = [
 
     path('dataconnection', views.dataconnection, name='dataconnection'),
     
-    path('rqDataJson/', views.rqDataJson, name='rqDataJson'),
+    path('rqDataNowJson/', views.rqDataNowJson, name='rqDataNowJson'),
+    path('rqDataExJson/', views.rqDataExJson, name='rqDataExJson'),
 ]

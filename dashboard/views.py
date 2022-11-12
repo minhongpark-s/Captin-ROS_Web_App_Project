@@ -157,9 +157,8 @@ def dataconnection(request):
         send_message = {'send_data' : "I received "+ receive_message_x + " and " + receive_message_y}
         return JsonResponse(send_message)
         
-        
-def rqDataJson(request):
-
+# request Data of Now.
+def rqDataNowJson(request):
     t1 = datetime.now()
     t2 = t1 - timedelta(seconds=1)
     c1 = t1.strftime('%Y-%m-%d %H:%M:%S')
@@ -175,4 +174,14 @@ def rqDataJson(request):
     return JsonResponse({"results":results}, status=200)
     #grd_list = serializers.serialize('json', grd)
     #return HttpResponse(grd_list, content_type="text/json-comment-filtered")
-
+    
+# request example response.
+def rqDataExJson(request):
+    grd = robotData2.objects.get(pk=1)
+    results = []
+    results.append({
+        "postime":grd.postime,
+        "x" : grd.robotPositionX,
+        "y" : grd.robotPositionY
+    })
+    return JsonResponse({"results":results}, status=200)
