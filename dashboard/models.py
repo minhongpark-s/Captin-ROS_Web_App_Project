@@ -12,3 +12,8 @@ class robotData2(models.Model):
     postime = models.CharField(max_length=20, null = True)
     robotPositionX = models.IntegerField()
     robotPositionY = models.IntegerField()
+    
+class requestData(models.Model):
+    requestPosition = models.IntegerField()
+    requestMethod = models.IntegerField()
+    requestTime = models.CharField(max_length=20, null = True)

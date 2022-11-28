@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+
+<head>
+
+</head>
+
+<body>
+  {% if status == "well" %}
+    <p>data request accepted.</p>
+    <p>request position : {{ requestPosition }}</p>
+    <p>request method : {{ requestMethod }}</p>
+  {% elif status == "wrongRequestPosition" %}
+    <P>request Position data has wrong dataType. use INT.</p>
+  {% elif status == "wrongRequestMethod" %}
+    <P>request method data has wrong dataType. use INT.</p>
+  {% elif status == "notGet" %}
+    <P>request method type error. use GET request.</p>
+  {% endif %}
+    
+</body>

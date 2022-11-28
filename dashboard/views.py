@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 
 from .models import robotData
 from .models import robotData2
+from .models import requestData
 # for timing the robotData database.
 from datetime import datetime
 from datetime import timedelta
@@ -185,3 +186,41 @@ def rqDataExJson(request):
         "y" : grd.robotPositionY
     })
     return JsonResponse({"results":results}, status=200)
+    
+def requestDelivery(request):
+    if request.method == 'GET':
+      if request.GET.get('requestPosition').isdigit():
+        if request.GET.get('requestMethod').isdigit():
+          
+          requestPosition = request.GET.get('requestPosition')
+          requestMethod = request.GET.get('requestMethod')
+          
+          # database post
+          rd = requestData()
+          rd.requestPosition = int(requestPosition)
+          rd.requestMethod = int(requestMethod)
+          rd.requestTime = datetime.now()
+          rd.save()
+        
+          context = {
+            "requestPosition": requestPosition,
+            "requestMethod" : requestMethod,
+            "status" : "well"
+          }
+          return render(request, 'dashboard/requestDeliveryResult.html', context)
+          
+        else :
+          context = {
+              "status" : "wrongRequestMethod"
+            }
+          return render(request, 'dashboard/requestDeliveryResult.html', context)
+      else :
+        context = {
+              "status" : "wrongRequestPosition"
+            }
+        return render(request, 'dashboard/requestDeliveryResult.html', context)
+    else :
+      context = {
+              "status" : "notGet"
+            }
+      return render(request, 'dashboard/requestDeliveryResult.html', context)
