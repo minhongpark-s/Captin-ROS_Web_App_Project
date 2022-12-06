@@ -17,3 +17,10 @@ class requestData(models.Model):
     requestPosition = models.IntegerField()
     requestMethod = models.IntegerField()
     requestTime = models.CharField(max_length=20, null = True)
+    
+class requestDelData(models.Model):
+    requestPosition = models.IntegerField()
+    requestMethod = models.IntegerField()
+    requestTime = models.CharField(max_length=20, null = True)
+    referenceStatus = models.CharField(max_length=20, null = True)
+    referenceTime = models.CharField(max_length=20, null = True)

@@ -1,15 +1,59 @@
+{% load static %}
 <!DOCTYPE html>
 
 <head>
-
+    <!-- CSS only -->
+    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap.min.css' %}"/>
+    <!-- pybo CSS -->
+    <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
 </head>
 
 <body>
-    <ul>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">x</th>
+      <th scope="col">y</th>
+      <th scope="col">postime</th>
+    </tr>
+  </thead>
+  <tbody>
     {% for i in rd %}
-        <li><p>{{i.robotPositionX}}</li>
-        <li>{{ i.robotPositionY }}</li>
-        <li><p>{{ i.postime }}</li>
+    <tr>
+      <th scope="row">#</th>
+      <td>{{i.robotPositionX}}</td>
+      <td>{{ i.robotPositionY }}</td>
+      <td>{{ i.postime }}</td>
+    </tr>
     {% endfor %}
-    </ul>
+  </tbody>
+</table>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Position</th>
+      <th scope="col">Method</th>
+      <th scope="col">reqTime</th>
+      <th scope="col">ref</th>
+      <th scope="col">refTime</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for i in rdd %}
+    <tr>
+      <th scope="row">#</th>
+      <td>{{ i.requestPosition}}</td>
+      <td>{{ i.requestMethod }}</td>
+      <td>{{ i.requestTime }}</td>
+      <td>{{ i.referenceStatus }}</td>
+      <td>{{ i.referenceTime }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 </body>
