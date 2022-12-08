@@ -451,7 +451,7 @@ def checkDeliveryRequest(request):
                 "position": position,
                 "method": method,
             })
-            return JsonResponse({"results":results}, status=200)
+            return JsonResponse({"response1":results}, status=200)
             
         except ObjectDoesNotExist:
             results = []
@@ -459,5 +459,49 @@ def checkDeliveryRequest(request):
                 "status" : "no request",
                 "nowTime": DN,
             })
-            return JsonResponse({"results":results}, status=200)
+            return JsonResponse({"response1":results}, status=200)
+      
+def changeFalseToMoving(request):
+    if request.method == 'GET':
+      DN = request.GET.get('requestTime')
+      try:
+        grd = requestDelData.objects.get(requestTime=DN)
+        grd.referenceStatus = "Moving"
+        grd.referenceTime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        grd.save()
+        results = []
+        results.append({
+          "status" : "False changed to Moving.",
+          "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        })
+        return JsonResponse({"response1":results}, status=200)
+      except ObjectDoesNotExist:
+            results = []
+            results.append({
+                "status" : "no database exist",
+                "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            })
+            return JsonResponse({"response1":results}, status=200)
+            
+def changeMovingToEnd(request):
+    if request.method == 'GET':
+      DN = request.GET.get('requestTime')
+      try:
+        grd = requestDelData.objects.get(referenceStatus="Moving")
+        grd.referenceStatus = "End"
+        grd.referenceTime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        grd.save()
+        results = []
+        results.append({
+          "status" : "Moving changed to End.",
+          "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        })
+        return JsonResponse({"response1":results}, status=200)
+      except ObjectDoesNotExist:
+            results = []
+            results.append({
+                "status" : "no moving data found",
+                "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            })
+            return JsonResponse({"response1":results}, status=200)
       

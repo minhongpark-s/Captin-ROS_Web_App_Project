@@ -21,4 +21,6 @@ urlpatterns = [
     path('shippedCheck/', views.shippedCheck, name='shippedCheck'),
     path('newestRefCheck/', views.newestRefCheck, name='newestRefCheck'),
     path('checkDeliveryRequest/', views.checkDeliveryRequest, name='checkDeliveryRequest'),
+    path('changeFalseToMoving/', views.changeFalseToMoving, name='changeFalseToMoving'),
+    path('changeMovingToEnd/', views.changeMovingToEnd, name='changeMovingToEnd'),
 ]
