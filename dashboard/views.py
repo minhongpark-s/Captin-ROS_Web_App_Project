@@ -1,6 +1,9 @@
 from http.client import HTTPResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.exceptions import MultipleObjectsReturned
+from django.db.models import Q
+
+import math
 
 from .models import robotData
 from .models import robotData2
@@ -27,9 +30,19 @@ def robotDataCleanUp(request):
     q = robotData2.objects.all()
     q.delete()
     return redirect('showAllDatabases')
+
+def robotLatestDataCleanUp(request):
+    q = robotData2.objects.all().latest('requestTime')
+    q.delete()
+    return redirect('showAllDatabases')
     
 def deliveryDataCleanUp(request):
     q = requestDelData.objects.all()
+    q.delete()
+    return redirect('showAllDatabases')
+
+def deliveryLatestDataCleanUp(request):
+    q = requestDelData.objects.all().latest('requestTime')
     q.delete()
     return redirect('showAllDatabases')
 
@@ -77,7 +90,7 @@ def showAllDatabases(request):
         'dashboard/databaseTable.html',
         {'rd' : rd,'rdd' : rdd },
     )
-        
+       
 def create1data(request):
     rd = robotData2()
     rd.robotPositionY = 10
@@ -184,15 +197,21 @@ def requestNowData(request):
             )
 def dataconnection(request):
     if request.method == 'POST':
+        scalingFactor = 10
         receive_message_x = request.POST.get('x')
         receive_message_y = request.POST.get('y')
         dn = str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
         rd = robotData2()
-        rd.robotPositionY = int(float(receive_message_x))
-        rd.robotPositionX = int(float(receive_message_y))
+        cvX = int(float(receive_message_x)*scalingFactor)
+        cvY = int(float(receive_message_y)*scalingFactor)
+        rd.robotPositionX = cvX
+        rd.robotPositionY = cvY
         rd.postime = dn
         rd.save()
-        send_message = {'send_data' : "I received "+ receive_message_x + " and " + receive_message_y + " time is " + dn }
+        send_message = {
+          'server received': 'x '+receive_message_x+ ', y: ' + receive_message_y,
+          'server database saved': 'x: '+ str(cvX) + ", y: " + str(cvY) + ", time: " + dn ,
+          'scalingFactor':scalingFactor}
         return JsonResponse(send_message)
         
 # request Data of Now.
@@ -222,22 +241,34 @@ def rqNowDataJson(request):
         c2 = t2.strftime('%Y-%m-%d %H:%M:%S')
         
         grd = robotData2.objects.get(postime=c1)
+        check = requestDelData.objects.all().latest('requestTime')
+        if check.referenceStatus == "Unloaded, Moving To Origin":
+          status = "True"
+        else:
+          status = "False"
         results = []
         results.append({
             "postime":grd.postime,
-            "x" : grd.robotPositionX,
-            "y" : grd.robotPositionY
+            "x" : Scaling(grd.robotPositionX/10*1.5),
+            "y" : Scaling(grd.robotPositionY/10*1.5),
+            "endStatus": status
         })
         return JsonResponse({"results":results}, status=200)
     except ObjectDoesNotExist:
         logs = "\nfirst database request failed."
         try:
             grd = robotData2.objects.get(postime=c2)
+            check = requestDelData.objects.all().latest('requestTime')
+            if check.referenceStatus == "Unloaded, Moving To Origin":
+              status = "True"
+            else:
+              status = "False"
             results = []
             results.append({
                 "postime":grd.postime,
-                "x" : grd.robotPositionX,
-                "y" : grd.robotPositionY
+                "x" : Scaling(grd.robotPositionX/10*1.5),
+                "y" : Scaling(grd.robotPositionY/10*1.5),
+                "endStatus": status
             })
             return JsonResponse({"results":results}, status=200)
         except ObjectDoesNotExist:
@@ -256,8 +287,8 @@ def rqNowDataJson(request):
             results = []
             results.append({
                 "postime":grd.postime,
-                "x" : grd.robotPositionX,
-                "y" : grd.robotPositionY
+                "x" : Scaling(grd.robotPositionX/10*1.5),
+                "y" : Scaling(grd.robotPositionY/10*1.5)
             })
             return JsonResponse({"results":results}, status=200)
     except robotData2.MultipleObjectsReturned:
@@ -266,22 +297,36 @@ def rqNowDataJson(request):
         results = []
         results.append({
             "postime":grd.postime,
-            "x" : grd.robotPositionX,
-            "y" : grd.robotPositionY
+            "x" : Scaling(grd.robotPositionX/10*1.5),
+            "y" : Scaling(grd.robotPositionY/10*1.5)
         })
         return JsonResponse({"results":results}, status=200)
 
     
 # request example response.
 def rqExDataJson(request):
-    grd = robotData2.objects.get(pk=1)
+    #grd = robotData2.objects.get(pk=1)
+    tx = 102
+    rx = 90
     results = []
     results.append({
         "postime":grd.postime,
-        "x" : grd.robotPositionX,
-        "y" : grd.robotPositionY
+        #"x" : grd.robotPositionX,
+        #"y" : grd.robotPositionY,
+        "x" : tx/10
     })
     return JsonResponse({"results":results}, status=200)
+
+def Scaling(num):
+  if num%math.floor(num) >= 0.75:
+    result = math.floor(num)+1
+  if(num%math.floor(num) < 0.75): 
+    if(num%math.floor(num) >= 0.25):
+      result = math.floor(num)+0.5
+  if num%math.floor(num) < 0.25:
+    result = math.floor(num)
+  return result
+    
     
 def requestDelivery(request):
     if request.method == 'GET':
@@ -337,17 +382,17 @@ def requestDeliveryJsonResponse(request):
           rd.requestPosition = int(requestPosition)
           rd.requestMethod = int(requestMethod)
           rd.requestTime = NT
-          rd.referenceStatus = False
+          rd.referenceStatus = "False"
           rd.save()
           
           # 로봇상태가 moving일 경우 즉시 Moving을 return후 종료.
-          if(requestDelData.objects.filter(referenceStatus="Moving").count() > 0):
+          if(requestDelData.objects.filter(Q(referenceStatus="Moving")|Q(referenceStatus="Loading Ready")|Q(referenceStatus="loaded")|Q(referenceStatus="Moving To Unload")|Q(referenceStatus="Unloaded, Moving To Origin")).count() > 0):
             rg = requestDelData.objects.get(requestTime=NT)
             if rg.referenceStatus == "False":
               rg.delete()
             results = []
             results.append({
-                  "status" : "Moving",
+                  "status" : "rejected because robot is delivering.",
             })
             return JsonResponse({"results":results}, status=200)
           i = 0
@@ -361,29 +406,50 @@ def requestDeliveryJsonResponse(request):
               results.append({
                   "requestPosition": requestPosition,
                   "requestMethod" : requestMethod,
-                  "stauts" : "ok"
+                  "status" : "ok"
               })
               return JsonResponse({"results":results}, status=200)
             # 5초 반복후 referenceStatus의 변화가 없으면 timeout을 return후 종료.
-            if i > 10:
+            if i > 20:
               grd.delete()
               results = []
               results.append({
                   "requestPosition": requestPosition,
                   "requestMethod" : requestMethod,
-                  "stauts" : "timeout"
+                  "status" : "timeout"
               })
               return JsonResponse({"results":results}, status=200)
             time.sleep(1)
             i = i + 1
             
-# 앱에서 배송자가 적재완료 버튼을 누르면 실행되는 함수.     
+# 앱에서 배송자가 적재완료 버튼을 누르면 실행되는 함수.
+# app's request   
 def shippedCheck(request):
     if request.method == 'GET':
+      DN=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
       # shippedStatus를 확인후 True일 경우 True를 return
       shippedStatus = request.GET.get('shippedStatus')
       if shippedStatus == "True":
         ########################################################## 기능 구현 필요. 로봇에 데이터 전송. ########################################################
+        try:
+          grd = requestDelData.objects.get(referenceStatus="Loading Ready")
+          grd.referenceStatus = "Loaded"
+          grd.loadedTime = DN
+          grd.save()
+          results = []
+          results.append({
+            "status" : "changed 'Loading Ready' to 'Loaded'",
+            "nowTime": DN,
+              })
+          return JsonResponse({"response1":results}, status=200)
+        except ObjectDoesNotExist:
+          results = []
+          results.append({
+            "status" : "no 'Loading Ready' request.",
+            "nowTime": DN,
+              })
+          return JsonResponse({"response1":results}, status=200)
+        #######################################################################################################################################################
         results = []
         results.append({
             "shippedStatus": "True"
@@ -460,14 +526,33 @@ def checkDeliveryRequest(request):
                 "nowTime": DN,
             })
             return JsonResponse({"response1":results}, status=200)
-      
+            
+def checkLoadedData(request):
+    if request.method == 'GET':
+      DN=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+      try:
+        grd = requestDelData.objects.get(referenceStatus="Loaded")
+        results = []
+        results.append({
+          "status" : "found Loaded Data",
+          "nowTime": DN,
+        })
+        return JsonResponse({"response1":results}, status=200)
+      except ObjectDoesNotExist:
+        results = []
+        results.append({
+          "status" : "no Loaded Data",
+          "nowTime": DN,
+        })
+        return JsonResponse({"response1":results}, status=200)
 def changeFalseToMoving(request):
     if request.method == 'GET':
-      DN = request.GET.get('requestTime')
+      #DN = request.GET.get('requestTime')
       try:
-        grd = requestDelData.objects.get(requestTime=DN)
+        #grd = requestDelData.objects.get(requestTime=DN)
+        grd = requestDelData.objects.all().latest('requestTime')
         grd.referenceStatus = "Moving"
-        grd.referenceTime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        grd.MSTime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         grd.save()
         results = []
         results.append({
@@ -483,17 +568,17 @@ def changeFalseToMoving(request):
             })
             return JsonResponse({"response1":results}, status=200)
             
-def changeMovingToEnd(request):
+def changeMovingToLoadingReady(request):
     if request.method == 'GET':
-      DN = request.GET.get('requestTime')
+      #DN = request.GET.get('requestTime')
       try:
         grd = requestDelData.objects.get(referenceStatus="Moving")
-        grd.referenceStatus = "End"
-        grd.referenceTime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        grd.referenceStatus = "Loading Ready"
+        grd.loadingReadyTime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         grd.save()
         results = []
         results.append({
-          "status" : "Moving changed to End.",
+          "status" : "'Moving' changed to 'Loading Ready'.",
           "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         })
         return JsonResponse({"response1":results}, status=200)
@@ -505,3 +590,155 @@ def changeMovingToEnd(request):
             })
             return JsonResponse({"response1":results}, status=200)
       
+def changeLoadedToMovingToUnload(request):
+    if request.method == 'GET':
+      #DN = request.GET.get('requestTime')
+      try:
+        grd = requestDelData.objects.get(referenceStatus="Loaded")
+        grd.referenceStatus = "Moving To Unload"
+        grd.MTUTime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        grd.save()
+        results = []
+        results.append({
+          "status" : "'Loaded' changed to  'Moving To Unload.",
+          "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        })
+        return JsonResponse({"response1":results}, status=200)
+      except ObjectDoesNotExist:
+            results = []
+            results.append({
+                "status" : "no Loaded data found",
+                "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            })
+            return JsonResponse({"response1":results}, status=200)
+
+# robot이 status 3을 publish하면 실행되는 함수.
+# robot's request            
+def changeMovingToUnloadToUnloadReady(request):
+    if request.method == 'GET':
+      #DN = request.GET.get('requestTime')
+      try:
+        grd = requestDelData.objects.get(referenceStatus="Moving To Unload")
+        grd.referenceStatus = "Unload Ready"
+        grd.URTime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        grd.save()
+        results = []
+        results.append({
+          "status" : "'Moving To Unload' changed to 'Unload Ready.",
+          "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        })
+        return JsonResponse({"response1":results}, status=200)
+      except ObjectDoesNotExist:
+            results = []
+            results.append({
+                "status" : "no Moving To Unload data found",
+                "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            })
+            return JsonResponse({"response1":results}, status=200)
+            
+# robot이 status 3을 publish하면 실행되는 함수.
+# robot's request            
+def changeMovingToUnloadToUnloadedandMovingToOrigin(request):
+    if request.method == 'GET':
+      #DN = request.GET.get('requestTime')
+      try:
+        grd = requestDelData.objects.get(referenceStatus="Moving To Unload")
+        grd.referenceStatus = "Unloaded, Moving To Origin"
+        grd.UMTime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        grd.save()
+        results = []
+        results.append({
+          "status" : "'Moving To Unload' changed to 'Unloaded, Moving To Origin.",
+          "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        })
+        return JsonResponse({"response1":results}, status=200)
+      except ObjectDoesNotExist:
+            results = []
+            results.append({
+                "status" : "no Moving To Unload data found",
+                "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            })
+            return JsonResponse({"response1":results}, status=200)
+
+# 앱에서 배송자가 수령완료 버튼을 누르면 실행되는 함수.     
+# app's request   
+def loadedCheck(request):
+    if request.method == 'GET':
+      DN=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+      # loadedStatus를 확인후 True일 경우 True를 return
+      loadedStatus = request.GET.get('loadedStatus')
+      if loadedStatus == "True":
+        ########################################################## 로봇에 데이터 전송. ########################################################
+        try:
+          grd = requestDelData.objects.get(referenceStatus="Unload Ready")
+          grd.referenceStatus = "Delivery Received"
+          grd.DRTime = DN
+          grd.save()
+          results = []
+          results.append({
+            "status" : "changed 'Unload Ready' to 'Delivery Received'",
+            "nowTime": DN,
+              })
+          return JsonResponse({"response1":results}, status=200)
+        except ObjectDoesNotExist:
+          results = []
+          results.append({
+            "status" : "no 'Unload Ready' request.",
+            "nowTime": DN,
+              })
+          return JsonResponse({"response1":results}, status=200)
+        #######################################################################################################################################################
+        results = []
+        results.append({
+            "shippedStatus": "True"
+        })
+        return JsonResponse({"results":results}, status=200)
+      else:
+        results = []
+        results.append({
+            "loadedStatus": "False"
+        })
+        return JsonResponse({"results":results}, status=200)
+        
+        
+def changeUnloadedandMovingToOriginToFinished(request):
+    if request.method == 'GET':
+      #DN = request.GET.get('requestTime')
+      try:
+        grd = requestDelData.objects.get(referenceStatus="Unloaded, Moving To Origin")
+        grd.referenceStatus = "Finished"
+        grd.FTime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        grd.save()
+        results = []
+        results.append({
+          "status" : "'Unloaded, Moving To Origin' changed to 'Finished.",
+          "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        })
+        return JsonResponse({"response1":results}, status=200)
+      except ObjectDoesNotExist:
+            results = []
+            results.append({
+                "status" : "no 'Unloaded, Moving To Origin' data found",
+                "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            })
+            return JsonResponse({"response1":results}, status=200)
+            
+def requestLatestDelStatus(request):
+    if request.method == 'GET':
+      DN=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+      try:
+        grd = requestDelData.objects.latest('requestTime')
+        results = []
+        results.append({
+          "status" : "'Moving' changed to 'Loading Ready'.",
+          "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+          "Status" : grd.referenceStatus
+        })
+        return JsonResponse({"response1":results}, status=200)
+      except ObjectDoesNotExist:
+            results = []
+            results.append({
+                "status" : "no data found",
+                "nowTime": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            })
+            return JsonResponse({"response1":results}, status=200) 

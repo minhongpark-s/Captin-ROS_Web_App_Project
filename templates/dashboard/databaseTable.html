@@ -2,58 +2,79 @@
 <!DOCTYPE html>
 
 <head>
-    <!-- CSS only -->
-    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap.min.css' %}"/>
-    <!-- pybo CSS -->
-    <link rel="stylesheet" type="text/css" href="{% static 'style.css' %}">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 
 <body>
-
-<table class="table">
-  <thead>
-    <tr>
-      <th scope="col">#</th>
-      <th scope="col">x</th>
-      <th scope="col">y</th>
-      <th scope="col">postime</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for i in rd %}
-    <tr>
-      <th scope="row">#</th>
-      <td>{{i.robotPositionX}}</td>
-      <td>{{ i.robotPositionY }}</td>
-      <td>{{ i.postime }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<table class="table">
-  <thead>
-    <tr>
-      <th scope="col">#</th>
-      <th scope="col">Position</th>
-      <th scope="col">Method</th>
-      <th scope="col">reqTime</th>
-      <th scope="col">ref</th>
-      <th scope="col">refTime</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for i in rdd %}
-    <tr>
-      <th scope="row">#</th>
-      <td>{{ i.requestPosition}}</td>
-      <td>{{ i.requestMethod }}</td>
-      <td>{{ i.requestTime }}</td>
-      <td>{{ i.referenceStatus }}</td>
-      <td>{{ i.referenceTime }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
+    <div>
+      <div class="card-body" style="border: 1px solid black; margin: 5px">
+        <table class="table table-dark">
+                      <thead>
+                        <tr>
+                          <th scope="col" data-sortable="" style="width: 5.0215%;">
+                            <a href="#" class="dataTable-sorter">#</a>
+                          </th>
+                          <th scope="col" data-sortable="" style="width: 5%;">
+                            <a href="#" class="dataTable-sorter">Position</a>
+                          </th>
+                          <th scope="col" data-sortable="" style="width: 5%;">
+                            <a href="#" class="dataTable-sorter">Method</a>
+                          </th>
+                          <th scope="col" data-sortable="" style="width: 10.94624%;">
+                            <a href="#" class="dataTable-sorter">요청 시간</a>
+                          </th>
+                          <th scope="col" data-sortable="" style="width: 4.5914%;">
+                            <a href="#" class="dataTable-sorter">상태</a>
+                          <th scope="col" data-sortable="" style="width: 20.5914%;">
+                            <a href="#" class="dataTable-sorter">TimeLine</a>
+                          
+                        </tr>
+                      </thead>
+                      <tbody>
+                      
+                        {% for i in rdd %}
+                        <tr>
+                          <th scope="row">#{{ i.pk }}</th>
+                          <td>{{ i.requestPosition}}</td>
+                          <td>{{ i.requestMethod }}</td>
+                          <td>{{ i.requestTime }}</td>
+                          {% if i.referenceStatus == "Moving" %}
+                            <td><span class="badge bg-success" style="scale:150%">Moving</span></td>
+                          {% elif i.referenceStatus == "False" %}
+                            <td><span class="badge bg-success" style="scale:150%">False</span></td>
+                          {% elif i.referenceStatus == "Loading Ready" %}
+                            <td><span class="badge bg-success" style="scale:150%">Loading Ready</span></td>
+                          {% elif i.referenceStatus == "Loaded" %}
+                            <td><span class="badge bg-success" style="scale:150%">Loaded</span></td>
+                          {% elif i.referenceStatus == "Moving To Unload" %}
+                            <td><span class="badge bg-success" style="scale:150%">Moving To Unload</span></td>
+                          {% elif i.referenceStatus == "Unload Ready" %}
+                            <td><span class="badge bg-success" style="scale:150%">Unload Ready</span></td>
+                          {% elif i.referenceStatus == "Unloaded, Moving To Origin" %}
+                            <td><span class="badge bg-success" style="scale:150%">Unloaded, Moving To Origin</span></td>
+                          {% elif i.referenceStatus == "Finished" %}
+                            <td><span class="badge bg-success">Finished</span></td>
+                          {% endif %}
+                          <td>
+                                  <div class="card-body" style="border: 1px solid black; margin: 5px; border-color: gray">
+                                    <p>요청 시간 : {{ i.requestTime}}</p>
+                                    <p>로봇이 움직이기 시작한 시간: {{ i.MSTime }}</p>
+                                    <p>로봇이 적재 지점에 도착한 시간: {{ i.loadingReadyTime }}</p>
+                                    <p>적재완료 요청 보낸 시간: {{ i.loadedTime }}</p>
+                                    <p>로봇이 도착지로 출발한 시간: {{ i.MTUTime }}</p>
+                                    <p>로봇이 물품 배송을 완료하고 출발한 시간: {{ i.UMTime }}</p>
+                                    <p>로봇이 처음 위치로 돌아온 시간: {{ i.FTime }}</p>
+                                  </div>
+                          </td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                      
+        </table>
+      </div>
+      <button type="button" onclick="location.href='http://3.38.25.123/dashboard/deliveryLatestDataCleanUp'" class="btn btn-danger" style="margin: 5px">배송 데이터 삭제</button>
+    </div>
 </body>
